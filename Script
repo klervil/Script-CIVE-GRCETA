@@ -1,0 +1,483 @@
+
+#Ajout des packages----
+library(readxl)
+library(agricolae)
+library (ggplot2)
+library(gridExtra)
+library (cowplot)
+library (patchwork)
+library (ggpubr)
+library(tidyverse)
+library(rstatix)
+library(zoo)
+library(lubridate)
+library(scales)
+
+
+
+#LES DONNEES----
+
+#Chargement des données
+cive <- read_excel("C:/Users/Klervi/Desktop/date cive 1.xls")
+View(cive)
+
+#Réarrangement de certaines données
+cive$`date recolte`<-as.factor(cive$`date recolte`)
+cive$`date semis`<-as.factor(cive$`date semis`)
+View(cive)
+
+#Création de subset
+
+civea<-subset(cive, year  == "2024")
+cive1<-subset(civea, `date recolte` == "2024-04-23")
+cive1<-cive1 [-c(1:4,23,24,31,32),]
+cive2<-subset(civea, `date recolte` == "2024-05-13")
+cive2<-cive2 [-(25:32),]
+cive3<-subset(civea, `date recolte` == "2024-05-28")
+cive3<-cive3 [-(25:32),]
+
+moda1<-subset(civea, Moda == "Brehat + Integral + Powergreen")
+moda2<-subset(civea, Moda == "Brehat")
+moda3<-subset(civea, Moda == "Integral")
+moda4<-subset(civea, Moda == "Powergreen")
+moda5<-subset(civea, Moda == "Higreen")
+moda6<-subset(civea, Moda == "Fascination")
+moda7<-subset(civea, Moda == "Mélange date 1")
+moda8<-subset(civea, Moda == "Mélange date 2")
+moda9<-subset(civea, Moda == "Mélange date 3")
+
+annee1<-subset(cive, Année == "2020")
+annee2<-subset(cive, Année == "2021")
+annee3<-subset(cive, Année == "2022")
+annee4<-subset(cive, Année == "2023")
+annee5<-subset(cive, Année == "2024")
+
+
+dateS<-subset(civea, Moda %in% c("Mélange date 1","Mélange date 2","Mélange date 3"))
+date1<-subset(dateS, `date recolte` == "2024-04-23")
+date2<-subset(dateS, `date recolte` == "2024-05-13")
+date3<-subset(dateS, `date recolte` == "2024-05-28")
+
+#Anova et Test de newman-keuls entre modalités pour chaque date de récolte----
+
+#Date 1 de récolte
+  #test normalité
+shapiro.test(cive1$`T MS/ha`)
+#Valeurs normal car p.value = 0,1935
+  # test homoscedasticité
+bartlett.test(`T MS/ha`~Moda, data = cive1)
+#homoscedasticité validée car p.value = 0.4352 > 0,05
+  #Anova
+test1<-aov(`T MS/ha`~Moda, data = cive1)
+summary(test1)
+#p.value = 0.000122 < 0,05 donc on rejette H0, H1 validé = il ya une différence de rendement significative
+  #Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(test1,"Moda",console = TRUE)
+
+#Date 2 de récolte
+  #test normalité
+shapiro.test(cive2$`T MS/ha`)
+#Valeurs normal car p.value = 0,8468
+  #test homoscedasticité
+bartlett.test(`T MS/ha`~Moda, data = cive2)
+#homoscedasticité validée car p.value = 0.7482 > 0,05
+  #Anova
+test2<-aov(`T MS/ha`~Moda, data = cive2)
+summary(test2)
+#proba = 0,000878 < 0,05 donc on rejette H0 donc H1 validé = il ya une différence de rendement significative
+  #Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(test2,"Moda",console = TRUE)
+
+#Date 3 de récolte
+ #test normalité 
+shapiro.test(cive3$`T MS/ha`)
+#Valeurs normal car p.value = 0,0643
+  #test homoscedasticité
+bartlett.test(`T MS/ha`~Moda, data = cive3)
+#homoscedasticité validée car p.value = 0,3253 > 0,05
+  #Anova
+test3<-aov(`T MS/ha`~Moda, data = cive3)
+summary(test3)
+#proba = 0.00353 < 0,05 donc on rejette H0 donc H1 validé = il ya une différence de rendement significative
+#Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(test3,"Moda",console = TRUE)
+
+#Boxplot rendement par moda par date de récolte ----
+
+d1<-ggplot(cive1, aes(x= `date recolte`, y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=Moda, fill=Moda),position=position_dodge(2)) +
+  coord_cartesian(ylim = c(6,  16),xlim=c(0.60,1.40))+
+  theme(legend.text = element_text( size = 13),legend.position =  "none",axis.title.x = element_blank(),axis.text.x = element_text(face = "bold", size = 12))+
+  annotate("text",x=0.147,y=9.5,label="a",size  =4)+
+  annotate("text",x=0.43,y=9,label="a",size  =4) +
+  annotate("text",x=0.716,y= 9.3,label="a",size  =4) +
+  annotate("text",x=1,y=9.5,label="a",size  =4)+
+  annotate("text",x=1.285,y=7.3,label="b",size  =4) +
+  annotate("text",x=1.57,y=9.5,label="a",size  =4) +
+  annotate("text",x=1.857,y= 8.8,label="a",size  =4)
+
+d2<-ggplot(cive2, aes(x= `date recolte`, y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=Moda, fill=Moda),position=position_dodge(2)) +
+  coord_cartesian(ylim = c(6,  16),xlim=c(0.60,1.40))+
+  theme(legend.text = element_text( size = 13),axis.title.x = element_blank(),axis.text.x = element_text(face = "bold", size = 12))+
+  annotate("text",x=0.147,y=14.5,label="a",size  =4)+
+  annotate("text",x=0.43,y=13,label="ab",size  =4) +
+  annotate("text",x=0.716,y= 12.3,label="bc",size  =4) +
+  annotate("text",x=1,y=12.7,label="ab",size  =4)+
+  annotate("text",x=1.285,y=10.6,label="c",size   =4) +
+  annotate("text",x=1.57,y=12.8,label="ab",size  =4)+
+  annotate("text",x=1.837,y= 13.4,label="ab",size   =4)
+
+
+d3<-ggplot(cive3, aes(x=`date recolte` , y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=Moda, fill=Moda),position=position_dodge(2)) +
+  coord_cartesian(ylim = c(6,  16),xlim=c(0.60,1.40))+
+  theme(legend.text = element_text( size = 13),axis.title.x = element_blank(),axis.text.x = element_text(face = "bold", size = 12))+
+  annotate("text",x=0.147,y=15.9,label="a",size   =4)+
+  annotate("text",x=0.43,y=15.3,label="ab",size   =4) +
+  annotate("text",x=0.716,y= 12.1,label="b",size   =4) +
+  annotate("text",x=1,y=16.3,label="a",size   =4)+
+  annotate("text",x=1.285,y=13,label="b",size   =4) +
+  annotate("text",x=1.57,y=15.5,label="ab",size  =4)+
+  annotate("text",x=1.837,y= 15.5,label="ab",size   =4)
+
+#graph comparaison entre moda par date de récolte ----
+ggarrange(d1,d2,d3,ncol=3, nrow=1,common.legend = TRUE, legend = "right")
+#annotate_figure(D, top = text_grob("Rendement en tonne de matière sèche par hectare selon la date de récolte en fonction des modalités", 
+                                  # face = "bold", size = 14))
+
+
+
+
+
+#Anova et Test de newman-keuls entre date de récolte pour chaque modalité ----
+
+#moda 1
+
+  #Test normalité
+shapiro.test(moda1$`T MS/ha`)
+#Valeurs normal car p.value = 0.4713
+  #test homoscedasticité
+bartlett.test(`T MS/ha`~`date recolte`, data = moda1)
+#homoscedasticité validée car p.value = 0.05072 > 0,05
+  #Anova
+mtest1<-aov(`T MS/ha`~`date recolte`, data = moda1)
+summary(mtest1)
+#proba = 0.00142< 0,05 donc on rejette H0 donc H1 validé = il ya une différence de rendement significative
+  #Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(mtest1,"date recolte",console = TRUE)
+
+#moda 2
+
+  #Test de normalité
+shapiro.test(moda2$`T MS/ha`)
+#Valeurs normal car p.value = 0.09185
+  #test homoscedasticité
+bartlett.test(`T MS/ha`~`date recolte`, data = moda2)
+#homoscedasticité validée car p.value = 0.9889 > 0,05
+  #Anova
+mtest2<-aov(`T MS/ha`~`date recolte`, data = moda2)
+summary(mtest2)
+#proba = 1.87e-062e-16 < 0,05 donc on rejette H0 donc H1 validé = il ya une différence de rendement significative
+#Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(mtest2,"date recolte",console = TRUE)
+
+#moda 3
+
+  #test normalité
+shapiro.test(moda3$`T MS/ha`)
+#Valeurs normal car p.value = 0.5993
+  #Test homoscedasticité
+bartlett.test(`T MS/ha`~`date recolte`, data = moda3)
+#homoscedasticité validée car p.value = 0.4804 > 0,05
+  #Anova
+mtest3<-aov(`T MS/ha`~`date recolte`, data = moda3)
+summary(mtest3)
+#proba = 0.000141 < 0,05 donc on rejette H0 donc H1 validé = il ya une différence de rendement significative
+#Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(mtest3,"date recolte",console = TRUE)
+
+#moda 4
+
+  #test normalité
+shapiro.test(moda4$`T MS/ha`)
+#Valeurs normal car p.value = 0.2678
+  #Test homoscedasticité
+bartlett.test(`T MS/ha`~`date recolte`, data = moda4)
+#homoscedasticité validée car p.value = 0.07375 > 0,05
+  #Anova
+mtest4<-aov(`T MS/ha`~`date recolte`, data = moda4)
+summary(mtest4)
+#proba = 0.000867 < 0,05 donc on rejette H0 donc H1 validé = il ya une différence de rendement significative
+#Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(mtest4,"date recolte",console = TRUE)
+
+#moda 5
+
+  #test normalité
+shapiro.test(moda5$`T MS/ha`)
+#Valeurs normal car p.value = 0.5116
+  #Test homoscedasticité
+bartlett.test(`T MS/ha`~`date recolte`, data = moda5)
+#homoscedasticité validée car p.value =  0.1236 > 0,05
+  #Anova
+mtest5<-aov(`T MS/ha`~`date recolte`, data = moda5)
+summary(mtest5)
+#proba = 4.72e-05 < 0,05 donc on rejette H0 donc H1 validé = il ya une différence de rendement significative
+#Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(mtest5,"date recolte",console = TRUE)
+
+#moda 6
+
+  #test normalité
+shapiro.test(moda6$`T MS/ha`)
+#Valeurs normal car p.value = 0.1643
+  #Test homoscedasticité
+bartlett.test(`T MS/ha`~`date recolte`, data = moda6)
+#homoscedasticité validée car p.value = 0.4056 > 0,05
+  #Anova
+mtest6<-aov(`T MS/ha`~`date recolte`, data = moda6)
+summary(mtest6)
+#proba = 0.000214< 0,05 donc on rejette H0 donc H1 validé = il ya une différence de rendement significative
+#Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(mtest6,"date recolte",console = TRUE)
+
+#moda 7
+
+  #test normalité
+shapiro.test(moda7$`T MS/ha`)
+#Valeurs normal car p.value = 0.339
+  #Test homoscedasticité
+bartlett.test(`T MS/ha`~`date recolte`, data = moda7)
+#homoscedasticité validée car p.value = 0.07522 > 0,05
+  #Anova
+mtest7<-aov(`T MS/ha`~`date recolte`, data = moda7)
+summary(mtest7)
+#proba = 0.000495 < 0,05 donc on rejette H0 donc H1 validé = il ya une différence de rendement significative
+#Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(mtest7,"date recolte",console = TRUE)
+
+
+#Boxplots rendement par date de récolte par moda
+
+h1<-ggplot(moda1, aes(x= Moda, y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=`date recolte`)) +
+  coord_cartesian(ylim = c(6, 17))+
+  theme(legend.text = element_text( size = 12),legend.title = element_text(size = 12) ,axis.title.x = element_blank(),axis.text.x = element_text( size = 12))+
+  annotate("text",x=0.75,y=10,label="b",size=3)+
+  annotate("text",x=1,y=14,label="a",size=3) +
+  annotate("text",x=1.25,y= 16,label="a",size=3)
+
+h2<-ggplot(moda2, aes(x= Moda, y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=`date recolte`)) +
+  coord_cartesian(ylim = c(6,  17)) +
+  theme(legend.text = element_text( size = 12),legend.title = element_text(size = 12) ,axis.title.x = element_blank(),axis.title.y = element_blank(),axis.text.x = element_text( size = 12))+
+  annotate("text",x=0.75,y=10.2,label="c",size=3)+
+  annotate("text",x=1,y=15,label="b",size=3) +
+  annotate("text",x=1.25,y= 16.5,label="a",size=3)
+
+h3<-ggplot(moda3, aes(x= Moda, y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=`date recolte`)) +
+  coord_cartesian(ylim = c(6,  17))+
+  theme(legend.text = element_text( size = 12),legend.title = element_text(size = 12) ,axis.title.x = element_blank(),axis.title.y = element_blank(),axis.text.x = element_text( size = 12))+
+  annotate("text",x=0.75,y=7.8,label="c",size=3)+
+  annotate("text",x=1,y=11.5,label="b",size=3) +
+  annotate("text",x=1.25,y= 13.5,label="a",size=3)
+
+h4<-ggplot(moda4, aes(x= Moda, y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=`date recolte`)) +
+  coord_cartesian(ylim = c(6,  17))+
+  theme(legend.text = element_text( size = 12),legend.title = element_text(size = 12) ,axis.title.x = element_blank(),axis.text.x = element_text( size = 12))+
+  annotate("text",x=0.75,y=9.5,label="b",size=3)+
+  annotate("text",x=1,y=14,label="a",size=3) +
+  annotate("text",x=1.25,y= 16,label="a",size=3)
+
+h5<-ggplot(moda5, aes(x= Moda, y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=`date recolte`)) +
+  coord_cartesian(ylim = c(6,  17))+
+  theme(legend.text = element_text( size = 12),legend.title = element_text(size = 12) ,axis.title.x = element_blank(),axis.title.y = element_blank(),axis.text.x = element_text( size = 12))+
+  annotate("text",x=0.75,y=10,label="c",size=3)+
+  annotate("text",x=1,y=13.1,label="b",size=3) +
+  annotate("text",x=1.25,y= 16.6,label="a",size=3)
+
+h6<-ggplot(moda6, aes(x= Moda, y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=`date recolte`)) +
+  coord_cartesian(ylim = c(6,  17))+
+  theme(legend.text = element_text( size = 12),legend.title = element_text(size = 12) ,axis.title.x = element_blank(),axis.title.y = element_blank(),axis.text.x = element_text( size = 12))+
+  annotate("text",x=0.75,y=10,label="b",size=3)+
+  annotate("text",x=1,y=13,label="a",size=3) +
+  annotate("text",x=1.25,y= 12.7,label="a",size=3)
+
+h7<-ggplot(moda7, aes(x= Moda, y = `T MS/ha`)) +
+  geom_boxplot(mapping=aes(col=`date recolte`)) +
+  coord_cartesian(ylim = c(6,  17))+
+  theme(legend.text = element_text( size = 12),legend.title = element_text(size = 12) ,axis.title.x = element_blank(),axis.text.x = element_text( size = 12))+
+  annotate("text",x=0.75,y=10,label="b",size=3)+
+  annotate("text",x=1,y=13.4,label="a",size=3) +
+  annotate("text",x=1.25,y= 16,label="a",size=3)
+
+#graph comparaison rendement des dates de récolte par moda----
+ggarrange(h1,h2,h3,h4,h5,h6,h7,ncol=3, nrow=3,common.legend = TRUE, legend = "right")
+#annotate_figure(H, top = text_grob("Rendement en tonne de matière sèche par hectare par modalité en fonction des dates de récoltes", 
+                                   #face = "bold", size = 13))
+
+
+
+
+#Anova et Test de newman-keuls entre dates de semis pour chaque date de récolte----
+
+#Date 1
+  #test normalité
+shapiro.test(date1$`T MS/ha`)
+#Valeurs normal car p.value = 0.2304
+bartlett.test(`T MS/ha`~Moda, data = date1)
+  #test homoscedasticité 
+#homoscedasticité validée car p.value = 0.6541 > 0,05
+testS1<-aov(`T MS/ha`~`date semis`, data = date1)
+summary(testS1)
+#proba = 7.35e-05 < 0,05 donc on rejette H0 donc H1 validé = il ya une différence de rendement significative
+#Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(testS1,"date semis",console = TRUE)
+
+#Date 2
+  #test normalité
+shapiro.test(date2$`T MS/ha`)
+#Valeurs normal car p.value = 0.3065
+  #test homoscedasticité 
+bartlett.test(`T MS/ha`~Moda, data = date2)
+#homoscedasticité validée car p.value = 0.435 > 0,05
+  #Anova
+testS2<-aov(`T MS/ha`~`date semis`, data = date2)
+summary(testS2)
+#proba = 0.22 > 0,05 donc on accepte H0 = il n'y a pas de différence de rendement significative
+#Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(testS2,"date semis",console = TRUE)
+
+#Date 3
+
+  #test normalité
+shapiro.test(date3$`T MS/ha`)
+#Valeurs normal car p.value = 0.1275
+  #test homoscedasticité 
+bartlett.test(`T MS/ha`~Moda, data = date3)
+#homoscedasticité validée car p.value = 0.1423 > 0,05
+  #Anova
+testS3<-aov(`T MS/ha`~`date semis`, data = date3)
+summary(testS3)
+#proba =  0.401> 0,05 donc on accepte H0 = il n'y a pas de différence de rendement significative
+#Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(testS3,"date semis",console = TRUE)
+
+
+#boxplots 
+
+s1<-ggplot(date1, aes(x= `date recolte`, y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=Moda, fill=Moda),position=position_dodge(2)) +
+  coord_cartesian(ylim = c(6,  16),xlim=c(0.60,1.40))+
+  theme(legend.text = element_text( size = 13),axis.title.x = element_blank(),axis.text.x = element_text(face = "bold", size = 12))+
+  annotate("text",x=0.336,y=9.7,label="a",size  =4)+
+  annotate("text",x=1,y=9,label="b",size  =4) +
+  annotate("text",x=1.67,y= 7.7,label="c",size  =4)
+
+
+
+s2<-ggplot(date2, aes(x= `date recolte`, y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=Moda, fill=Moda),position=position_dodge(2)) +
+  coord_cartesian(ylim = c(6,  16),xlim=c(0.60,1.40))+
+  theme(legend.text = element_text( size = 13),axis.title.x = element_blank(),axis.text.x = element_text(face = "bold", size = 12))+
+  annotate("text",x=0.336,y=13,label="a",size  =4)+
+  annotate("text",x=1,y=13,label="a",size  =4) +
+  annotate("text",x=1.67,y= 12.4,label="a",size  =4)
+
+
+s3<-ggplot(date3, aes(x= `date recolte`, y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=Moda, fill=Moda),position=position_dodge(2)) +
+  coord_cartesian(ylim = c(6,  16),xlim=c(0.60,1.40))+
+  theme(legend.text = element_text( size = 13),axis.title.x = element_blank(),axis.text.x = element_text(face = "bold", size = 12))+
+  annotate("text",x=0.336,y=15.7,label="a",size  =4)+
+  annotate("text",x=1,y=15.2,label="a",size  =4) +
+  annotate("text",x=1.67,y= 13.2,label="a",size  =4)
+
+#Graph comparaison des date de semis par date de récolte----
+
+ggarrange(s1,s2,s3,ncol=3, nrow=1,common.legend = TRUE, legend = "right")  
+
+
+
+
+
+#Anova et Test de newman-keuls entre dates de récoltes par date de semis 2 et 3----
+
+#date semis 1
+  #test normalité
+shapiro.test(moda8$`T MS/ha`)
+#Valeurs normal car p.value = 0.283
+  #test homoscedasticité
+bartlett.test(`T MS/ha`~`date recolte`, data = moda8)
+#homoscedasticité validée car p.value = 0.07866 > 0,05
+  #test anova
+mtest8<-aov(`T MS/ha`~`date recolte`, data = moda8)
+summary(mtest8)
+#proba = 0.000156 < 0,05 donc on rejette H0 donc H1 validé = il ya une différence de rendement significative
+#Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(mtest8,"date recolte",console = TRUE)
+
+#date semis 2
+  #test normalité
+shapiro.test(moda9$`T MS/ha`)
+#Valeurs pas normal car p.value = 0.03142
+bartlett.test(`T MS/ha`~`date recolte`, data = moda9)
+#homoscedasticité validée car p.value = 0.1604 > 0,05
+mtest9<-aov(`T MS/ha`~`date recolte`, data = moda9)
+summary(mtest9)
+#proba = 6.29e-06 < 0,05 donc on rejette H0 donc H1 validé = il ya une différence de rendement significative
+#Test Newman pour savoir quelles moyennes ont des différences significatives entres elles
+SNK.test(mtest9,"date recolte",console = TRUE)
+#A,B,C
+
+#boxplots
+h7<-ggplot(moda7, aes(x= Moda, y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=`date recolte`)) +
+  coord_cartesian(ylim = c(6,  17))+
+  theme(legend.text = element_text( size = 12),legend.title = element_text(size = 12) ,axis.title.x = element_blank(),axis.text.x = element_text( size = 12))+
+  annotate("text",x=0.75,y=10,label="b",size=4)+
+  annotate("text",x=1,y=13.4,label="a",size=4) +
+  annotate("text",x=1.25,y= 16,label="a",size=4)
+
+h8<-ggplot(moda8, aes(x= Moda, y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=`date recolte`)) +
+  coord_cartesian(ylim = c(6,  17))+
+  theme(legend.text = element_text( size = 12),legend.title = element_text(size = 12) ,axis.title.x = element_blank(),axis.title.y = element_blank(),axis.text.x = element_text( size = 12))+
+  annotate("text",x=0.75,y=9.4,label="c",size=4)+
+  annotate("text",x=1,y=13.5,label="b",size=4) +
+  annotate("text",x=1.25,y= 15.4,label="a",size=4)
+
+h9<-ggplot(moda9, aes(x= Moda, y = `T MS/ha`)) + 
+  geom_boxplot(mapping=aes(col=`date recolte`)) +
+  coord_cartesian(ylim = c(6,  17))+
+  theme(legend.text = element_text( size = 12),legend.title = element_text(size = 12), axis.title.x = element_blank(),axis.title.y = element_blank(),axis.text.x = element_text( size = 12))+
+  annotate("text",x=0.75,y=8,label="c",size=4)+
+  annotate("text",x=1,y=12.8,label="b",size=4) +
+  annotate("text",x=1.25,y= 13.8,label="a",size=4)
+#graph comparaison des dates de recolte pour chaque dat de semis-----
+ggarrange(h7,h8,h9,ncol=3, nrow=1,common.legend = TRUE, legend = "right")
+
+
+#Graph comparaison des années----
+# Extraction des données nécessaires
+df = data.frame(date = as.Date(cive$`j-d-recolte`), 
+                value = cive$`T MS/ha`,
+                year = cive$year)
+
+# Création du plot
+ggplot(df, aes(date, value, group = date, colour = factor(year))) +
+  #ggtitle("Évolution de la biomasse récoltée au cours \n du temps pour les cinq dernières années") +
+  geom_boxplot() +
+  geom_point(alpha = 0.2) +
+  labs(x = "Date", colour = "Année", y = "MS/ha (T)") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  stat_summary(fun = median, geom = "line", aes(group = year)) +
+  scale_x_date(limits = as.Date(c('2000-04-10', '2000-05-30')))
+
+
