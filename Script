@@ -42,9 +42,9 @@ moda3<-subset(civea, Moda == "Integral")
 moda4<-subset(civea, Moda == "Powergreen")
 moda5<-subset(civea, Moda == "Higreen")
 moda6<-subset(civea, Moda == "Fascination")
-moda7<-subset(civea, Moda == "Mélange date 1")
-moda8<-subset(civea, Moda == "Mélange date 2")
-moda9<-subset(civea, Moda == "Mélange date 3")
+moda7<-subset(civea, Moda == "Mélange 'Letang' date 1")
+moda8<-subset(civea, Moda == "Mélange 'Letang' date 2")
+moda9<-subset(civea, Moda == "Mélange 'Letang' date 3")
 
 annee1<-subset(cive, Année == "2020")
 annee2<-subset(cive, Année == "2021")
@@ -53,7 +53,7 @@ annee4<-subset(cive, Année == "2023")
 annee5<-subset(cive, Année == "2024")
 
 
-dateS<-subset(civea, Moda %in% c("Mélange date 1","Mélange date 2","Mélange date 3"))
+dateS<-subset(civea, Moda %in% c("Mélange 'Letang' date 1","Mélange 'Letang' date 2","Mélange 'Letang' date 3"))
 date1<-subset(dateS, `date recolte` == "2024-04-23")
 date2<-subset(dateS, `date recolte` == "2024-05-13")
 date3<-subset(dateS, `date recolte` == "2024-05-28")
@@ -258,7 +258,7 @@ summary(mtest7)
 SNK.test(mtest7,"date recolte",console = TRUE)
 
 
-#Boxplots rendement par date de récolte par moda
+#Boxplots rendement par date de récolte par moda----
 
 h1<-ggplot(moda1, aes(x= Moda, y = `T MS/ha`)) + 
   geom_boxplot(mapping=aes(col=`date recolte`)) +
@@ -369,7 +369,7 @@ summary(testS3)
 SNK.test(testS3,"date semis",console = TRUE)
 
 
-#boxplots 
+#boxplots ----
 
 s1<-ggplot(date1, aes(x= `date recolte`, y = `T MS/ha`)) + 
   geom_boxplot(mapping=aes(col=Moda, fill=Moda),position=position_dodge(2)) +
